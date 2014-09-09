@@ -33,9 +33,11 @@ class LocationWithLatLng(models.Model):
     to_street = models.CharField(max_length=255, blank=False, default='')
     side = models.CharField(max_length=5, blank=False, default='')
 
+    # The latitude and longitude of the intersection between main_street and from_street
     lat_main_from = models.DecimalField(max_digits=15, decimal_places=8, default=0.0)
     lng_main_from = models.DecimalField(max_digits=15, decimal_places=8, default=0.0)
 
+    # The latitude and longitude of the intersection between main_street and to_street
     lat_main_to = models.DecimalField(max_digits=15, decimal_places=8, default=0.0)
     lng_main_to = models.DecimalField(max_digits=15, decimal_places=8, default=0.0)
 

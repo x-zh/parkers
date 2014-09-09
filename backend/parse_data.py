@@ -14,14 +14,20 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Parkers.settings")
 
 import csv
 import json
+import time
 import urllib2
 import sys
+import hashlib
+import hmac
+import base64
+import urlparse
 from backend.models import LocationWithLatLng
+
+KEY = '21499889482-0hdh8qgo45cr38sui06damoqp5co4j5l.apps.googleusercontent.com'
 
 
 def process(file_path):
     count = 0
-    test_count = 1
     with open(file_path, 'rb') as csv_file:
         reader = csv.reader(csv_file)
         for row in reader:
@@ -39,13 +45,17 @@ def process(file_path):
             to_street = row[4].strip()
             side = row[5].strip()
 
-            area = GetCode(code)
+            area = get_code(code)
+
+            # Check if this data has already been fetched.
+            if LocationWithLatLng.objects.filter(code=code, status=status).exists():
+                continue
 
             location_from_street = main_street + ' and ' + from_street + ', ' + area
-            location_info_from = fetchLatLng(location_from_street)
+            location_info_from = fetch_lat_lng(location_from_street)
 
             location_to_street = main_street + ' and ' + to_street + ', ' + area
-            location_info_to = fetchLatLng(location_to_street)
+            location_info_to = fetch_lat_lng(location_to_street)
 
             location = LocationWithLatLng()
             location.code = code
@@ -60,17 +70,20 @@ def process(file_path):
             location.lng_main_to = location_info_to['lng']
             location.save()
 
-            if count == test_count:
-                # break
-                pass
+            time.sleep(0.20)
+
+            print 'count: ', count
 
 
-def fetchLatLng(address):
+def fetch_lat_lng(address):
     user_agent = ('Mozilla/5.0 (Windows NT 6.1; rv:9.0) '
                   + 'Gecko/20100101 Firefox/9.0')
     headers = {'User-Agent': user_agent}
+    # url = 'http://maps.googleapis.com/maps/api/geocode/json?client=%s&address=%s&sensor=true' % (KEY, address)
     url = 'http://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=true' % address
     url = url.replace(' ', '%20')
+    # url = sign_url(url)
+    print url
     request = urllib2.Request(url=url, headers=headers)
     try:
         data = urllib2.urlopen(request).read()
@@ -83,7 +96,7 @@ def fetchLatLng(address):
         print sys.exc_info()
 
 
-def GetCode(v):
+def get_code(v):
     if 'B' in v:
         return 'Bronx'
     elif 'K' in v:
@@ -95,6 +108,33 @@ def GetCode(v):
     elif 'S':
         return 'Staten Island'
     print 'Error: Borough code not found!!'
+
+
+def sign_url(url):
+    # Convert the URL string to a URL, which we can parse
+    # using the urlparse() function into path and query
+    # Note that this URL should already be URL-encoded
+    url = urlparse.urlparse(url)
+
+    privateKey = "-----BEGIN PRIVATE KEY-----\nMIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAL1Oc55+pbGuJWxT\no9xeGuQ14Pz/R0+ax/DSfQNQ2VQHKul3EA8O/Pr5qmOFaDU5hE3Up8lBI6tKeR84\nbSwCM5O/BEYvzijKYgEtaSRmaGpE506y6b+12nf5H9Mb8FD5R+YIL5ZYfY7Yzewb\ngyhZFOEnzfO80ky2JTwb9ser9uadAgMBAAECgYBT1kqeBria1+T69I+9KHAAYVwi\nr2uFdabWoGF89nFJJWN7wZ77DEg9XhR3vr1H1REi5urn1lFVqsW5bePreY4dPX+p\nUsZo3r5EDvqh0nf3IK3l3WR9Cp7bXg9ab9o0rUF4S1CAu66iQkU20KzFWIxeO48i\nFQ8EZVnqkPJh8/KigQJBAOP3N8i6PLt1kEDoAITtOJHfYiuQ3x5oP3ZPtREsR1kU\nPSTPUKCKJzctJiatofhUrpjKp+iSTA51/JFjrSIiuN8CQQDUlitPy2wnapTvVqeT\nWl5cDcsfq6AbAq30LrysT/5FH0nwkG5BRUZ1h/8PVXjIdlRbztGUB1QFZ/skJSRc\nfMQDAkEAx1d6tFAGo3XeOqOlMJevi/9mfOol8RT/yZlRoD6z9TU5cmLHAltMh3c3\nkULsC5chRgKQaVLkpxCNVyVuVBdAyQJBAI5bGRnQENa8SouTLZhBFZrzKahFl2s+\n+hngCjwhPRYwg6TyMsLGjw45SZWNGNq0Un1AG5vS5HLSVJy5uoWsjt0CQQCTYSMS\nokKlssrYAg4bxCcxqfpfkgmIIg+5WF5WASY+/9ddI4sRKTDzrrbbVe7M7bwXDYSK\nXzWO+qiZh7CwLXxF\n-----END PRIVATE KEY-----\n"
+
+    # We only need to sign the path+query part of the string
+    urlToSign = url.path + "?" + url.query
+
+    # Decode the private key into its binary format
+    decodedKey = base64.urlsafe_b64decode(privateKey)
+
+    # Create a signature using the private key and the URL-encoded
+    # string using HMAC SHA1. This signature will be binary.
+    signature = hmac.new(decodedKey, urlToSign, hashlib.sha1)
+
+    # Encode the binary signature into base64 for use within a URL
+    encodedSignature = base64.urlsafe_b64encode(signature.digest())
+    originalUrl = url.scheme + "://" + url.netloc + url.path + "?" + url.query
+
+    fullUrl = originalUrl + "&signature=" + encodedSignature
+
+    return fullUrl
 
 
 if __name__ == '__main__':
