@@ -5,8 +5,14 @@ Created on 9/5/14
 
 @author: 'johnqiao'
 
+Convert address data to latitude and longitude data.
+
+Geocoding API
+
 request URL:
     https://maps.googleapis.com/maps/api/js/GeocodeService.Search?4sEAST%20TREMONT%20AVENUE%20and%20ARTHUR%20AVENUE%2C%20Bronx&7sUS&9sen&callback=_xdc_._jz4d5&token=57297
+
+Day limit 1250 requests, should use different IPs.
 
 """
 import os
