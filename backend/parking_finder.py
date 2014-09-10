@@ -58,9 +58,9 @@ that connect with it.
 import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Parkers.settings")
 
-from backend.models import LocationWithLatLng
+from backend.models import LocationWithLatLng, Sign
 
-delta_T = 0.0015  # 0.0065 about 0.7 miles
+delta_T = 0.0010  # 0.0065 is about 0.7 miles
 
 
 def finder(point):
@@ -71,21 +71,16 @@ def finder(point):
                                                   lat_main_from__lte=lat+delta_T,
                                                   lng_main_from__gte=lng-delta_T,
                                                   lng_main_from__lte=lng+delta_T)
-
-    intersections = []
     for location in locations:
-        has_location = False
-        for intersection in intersections:
-            if (location.main_street == intersection.main_street and location.from_street == intersection.from_street) or \
-                    (location.from_street == intersection.main_street and location.main_street == intersection.from_street):
-                has_location = True
-                break
-        if not has_location:
-            intersections.append(location)
-
-    print 'Total # of the results: ', len(intersections)
-    for intersection in intersections:
-        print intersection.main_street, 'and', intersection.from_street + ',', get_code(intersection.code)
+        print '------------------------------------'
+        print location.code, location.status, ', Main: ', location.main_street, get_code(location.code)
+        print 'From: %s (%f, %f), To: %s (%f, %f)' % (location.from_street, float(location.lat_main_from), float(location.lng_main_from),
+                                                      location.to_street, float(location.lat_main_to), float(location.lng_main_to))
+        # Get the sign info
+        signs = Sign.objects.filter(code=location.code, status=location.status)
+        for sign in signs:
+            print sign.sequence, '%5s' % sign.distance, '%5s' % sign.arrow, sign.description
+        print ''
 
 
 def get_code(v):
