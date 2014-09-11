@@ -91,59 +91,59 @@ def finder(point):
         print 'From: %s (%f, %f), To: %s (%f, %f), Side: %s' % (location.from_street, float(location.lat_main_from), float(location.lng_main_from),
                                                                 location.to_street, float(location.lat_main_to), float(location.lng_main_to),
                                                                 location.side)
-        # 1. Print the sign info.
-        # 2. Find the start point and end point.
         signs = Sign.objects.filter(code=location.code, status=location.status)
-        start_sign, end_sign = None, None
-        # if start_sign or end_sign is None, which means there is no 'Building Line' or 'Property Line' in sign description,
-        # then use start_sign_tmp or end_sign_tmp instead.
-        start_sign_tmp, end_sign_tmp = None, None
-        for sign in signs:
-            haha(sign)
-            if ('Building Line' in sign.description or 'Property Line' in sign.description) and not start_sign:
-                start_sign = sign
-            elif ('Building Line' in sign.description or 'Property Line' in sign.description) and not end_sign:
-                end_sign = sign
-            if 'Curb Line' in sign.description:
-                if not start_sign_tmp:
-                    start_sign_tmp = sign
-                elif not end_sign_tmp:
-                    end_sign_tmp = sign
-            # print sign.sequence, '%5s' % sign.distance, '%5s' % sign.arrow, sign.description
-        if not start_sign:
-            start_sign = start_sign_tmp
-        if not end_sign:
-            end_sign = end_sign_tmp
-        if start_sign and end_sign:
-            print 'Estimated parking slots: ', estimate_slots(end_sign.distance - start_sign.distance)
+        # for sign in signs:
+        #     print sign.sequence, '%5s' % sign.distance, '%5s' % sign.arrow, sign.description
+
+        sanitation_schedule, slots_num = get_sanitation_schedule(signs)
+        if sanitation_schedule and slots_num:
+            print 'Sanitation schedule: %s-%s, %s' % (sanitation_schedule[0], sanitation_schedule[1], sanitation_schedule[2])
+            print 'Estimated parking slots: ', slots_num
         print ''
 
 
-def haha(sign):
+def get_sanitation_schedule(signs):
     """Get sanitation schedule.
+    :param signs: a list of sign
+    :return: (schedule, slots_num)
+        schedule: (start time, end time, days in week)
+        slots_num: estimated number of cars can be parking in the street.
     """
+
+    start_sign, end_sign = None, None
+    sanitation_schedule = None
+    for (index, sign) in enumerate(signs):
+        if 'SANITATION BROOM SYMBOL' in sign.description and not start_sign:
+            # If current sign is not the first sign, then get the previous one as the start_sign for calculating the distance.
+            if index > 0:
+                start_sign = signs[index - 1]
+            else:
+                start_sign = sign
+        if 'SANITATION BROOM SYMBOL' in sign.description:
+            # If current sign is not the last sign, then get the next one as the end_sign for calculating the distance.
+            if index < len(signs) - 1:
+                end_sign = signs[index + 1]
+            else:
+                end_sign = sign
+            # Parse sanitation schedule
+            if not sanitation_schedule:
+                sanitation_schedule = parse_sanitation_schedule_date(sign.description)
+    distance = 0
+    if start_sign and end_sign:
+        distance = abs(end_sign.distance - start_sign.distance)
+    return sanitation_schedule, estimate_slots(distance)
+
+
+def parse_sanitation_schedule_date(text):
     import re
-    m = re.findall(r'(\d{1,2}:?\d{0,2}((A|P)M)?)(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)?)\s([\w\ \&]*\w+)\ ', sign.description)
+    m = re.findall(r'(\d{1,2}:?\d{0,2}((A|P)M)?)(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)?)\s([\w\ \&]*\w+)\ ', text)
     if m:
         m = m[0]
-        print m[0], m[5], m[8]
+        return m[0], m[5], m[8]
 
 
 def estimate_slots(length):
     return int(math.floor(length / car_length))
-
-
-def get_sanitation_schedule(signs):
-    """
-    :param signs: a list of signs of the street.
-    :return:
-    """
-    start_sign, end_sign = None, None
-    for (index, sign) in enumerate(signs):
-        if 'SANITATION BROOM SYMBOL' in sign.description and not start_sign:
-            start_sign = sign
-        if 'SANITATION BROOM SYMBOL' in sign.description:
-            end_sign = sign
 
 
 def get_code(v):
