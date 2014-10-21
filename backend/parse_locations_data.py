@@ -16,7 +16,7 @@ Day limit 1250 requests, should use different IPs.
 
 """
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Parkers.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "parkers.settings")
 
 import csv
 import json
@@ -145,4 +145,3 @@ def sign_url(url):
 
 if __name__ == '__main__':
     process('../data/locations.csv')
-

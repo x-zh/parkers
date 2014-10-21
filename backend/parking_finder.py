@@ -68,7 +68,7 @@ Special cases:
 
 
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Parkers.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "parkers.settings")
 
 import math
 from backend.models import LocationWithLatLng, Sign
@@ -164,4 +164,3 @@ if __name__ == '__main__':
     my_location = (40.878732, -73.8642857)
     finder(my_location)
     pass
-
