@@ -19,7 +19,7 @@ DATA SIZE: 94107 (updated 10/31/2014 by John Qiao)
 """
 import os
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Parkers.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "parkers.settings")
 
 import csv
 import json

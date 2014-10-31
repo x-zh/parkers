@@ -47,9 +47,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'Parkers.urls'
+ROOT_URLCONF = 'parkers.urls'
 
-WSGI_APPLICATION = 'Parkers.wsgi.application'
+WSGI_APPLICATION = 'parkers.wsgi.application'
 
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
