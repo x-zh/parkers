@@ -1,6 +1,6 @@
 # coding=UTF-8
 
-'''
+"""
 Created on 9/9/14
 
 @author: 'johnqiao'
@@ -64,10 +64,10 @@ Special cases:
 ,NO PARKING (SANITATION BROOM SYMBOL) 8-11AM MON & THURS SEE R7-84R
 9-10:30AM TUES & F RI W
 
-'''
-
+"""
 
 import os
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Parkers.settings")
 
 import math
@@ -81,10 +81,10 @@ def finder(point):
     lat = point[0]
     lng = point[1]
 
-    locations = LocationWithLatLng.objects.filter(lat_main_from__gte=lat-delta_T,
-                                                  lat_main_from__lte=lat+delta_T,
-                                                  lng_main_from__gte=lng-delta_T,
-                                                  lng_main_from__lte=lng+delta_T)
+    locations = LocationWithLatLng.objects.filter(lat_main_from__gte=lat - delta_T,
+                                                  lat_main_from__lte=lat + delta_T,
+                                                  lng_main_from__gte=lng - delta_T,
+                                                  lng_main_from__lte=lng + delta_T)
     for location in locations:
         print '------------------------------------'
         print location.code, location.status, ', Main: ', location.main_street, get_code(location.code)
@@ -93,7 +93,7 @@ def finder(point):
                                                                 location.side)
         signs = Sign.objects.filter(code=location.code, status=location.status)
         # for sign in signs:
-        #     print sign.sequence, '%5s' % sign.distance, '%5s' % sign.arrow, sign.description
+        # print sign.sequence, '%5s' % sign.distance, '%5s' % sign.arrow, sign.description
 
         sanitation_schedule, slots_num = get_sanitation_schedule(signs)
         if sanitation_schedule and slots_num:
@@ -136,6 +136,7 @@ def get_sanitation_schedule(signs):
 
 def parse_sanitation_schedule_date(text):
     import re
+
     m = re.findall(r'(\d{1,2}:?\d{0,2}((A|P)M)?)(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)?)\s([\w\ \&]*\w+)\ ', text)
     if m:
         m = m[0]

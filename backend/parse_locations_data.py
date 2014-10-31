@@ -14,8 +14,11 @@ request URL:
 
 Day limit 1250 requests, should use different IPs.
 
+DATA SIZE: 94107 (updated 10/31/2014 by John Qiao)
+
 """
 import os
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Parkers.settings")
 
 import csv

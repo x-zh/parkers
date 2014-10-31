@@ -1,6 +1,6 @@
 # coding=UTF-8
 
-'''
+"""
 Created on 9/9/14
 
 @author: 'johnqiao'
@@ -11,7 +11,7 @@ The distance returned is relative to Earth's radius.
 To get the distance in miles, multiply by 3959.
 To get the distance in kilometers, multiply by 6373.
 
-'''
+"""
 
 import math
 
@@ -20,11 +20,11 @@ def distance(origin, destination, radius):
     lat1, lon1 = origin
     lat2, lon2 = destination
 
-    dlat = math.radians(lat2-lat1)
-    dlon = math.radians(lon2-lon1)
-    a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-        * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) * math.sin(dlat / 2) + math.cos(math.radians(lat1)) \
+                                                  * math.cos(math.radians(lat2)) * math.sin(dlon / 2) * math.sin(dlon / 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     d = radius * c
 
     return d

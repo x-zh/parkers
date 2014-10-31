@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Quick-start development settings - unsuitable for production
@@ -57,11 +58,11 @@ TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'parkers',                      # Or path to database file if using sqlite3.
-        'USER': os.environ.get('MYSQL_USER') or "root",                      # Not used with sqlite3.
-        'PASSWORD': os.environ.get('MYSQL_PASSWORD') or "",                      # Not used with sqlite3.
-        'HOST': os.environ.get('MYSQL_HOST') or "",                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': os.environ.get('MYSQL_PORT') or "",                      # Set to empty string for default. Not used with sqlite3.
+        'NAME': 'parkers',  # Or path to database file if using sqlite3.
+        'USER': os.environ.get('MYSQL_USER') or "root",  # Not used with sqlite3.
+        'PASSWORD': os.environ.get('MYSQL_PASSWORD') or "",  # Not used with sqlite3.
+        'HOST': os.environ.get('MYSQL_HOST') or "",  # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': os.environ.get('MYSQL_PORT') or "",  # Set to empty string for default. Not used with sqlite3.
     }
 }
 
@@ -87,6 +88,6 @@ STATIC_URL = '/static/'
 
 # local settings
 try:
-    from local import *
+    from local_settings import *
 except:
     pass
