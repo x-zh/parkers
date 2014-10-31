@@ -58,10 +58,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'parkers',                      # Or path to database file if using sqlite3.
-        'USER': 'root',                      # Not used with sqlite3.
-        'PASSWORD': '',                      # Not used with sqlite3.
-        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
+        'USER': os.environ.get('MYSQL_USER') or "root",                      # Not used with sqlite3.
+        'PASSWORD': os.environ.get('MYSQL_PASSWORD') or "",                      # Not used with sqlite3.
+        'HOST': os.environ.get('MYSQL_HOST') or "",                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': os.environ.get('MYSQL_PORT') or "",                      # Set to empty string for default. Not used with sqlite3.
     }
 }
 
@@ -83,3 +83,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# local settings
+try:
+    from local import *
+except:
+    pass

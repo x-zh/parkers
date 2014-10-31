@@ -164,4 +164,3 @@ if __name__ == '__main__':
     my_location = (40.878732, -73.8642857)
     finder(my_location)
     pass
-

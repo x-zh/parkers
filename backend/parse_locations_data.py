@@ -208,4 +208,3 @@ if __name__ == '__main__':
     # process_file('../data/locations.csv')
     count = LocationWithLatLng.objects.all().count()
     process_db(count - 10)
-
