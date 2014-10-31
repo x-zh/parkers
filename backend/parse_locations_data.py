@@ -27,12 +27,12 @@ import hashlib
 import hmac
 import base64
 import urlparse
-from backend.models import LocationWithLatLng
+from backend.models import LocationWithLatLng, Location
 
 KEY = '21499889482-0hdh8qgo45cr38sui06damoqp5co4j5l.apps.googleusercontent.com'
 
 
-def process(file_path):
+def process_file(file_path):
     count = 0
     with open(file_path, 'rb') as csv_file:
         reader = csv.reader(csv_file)
@@ -76,9 +76,70 @@ def process(file_path):
             location.lng_main_to = location_info_to['lng']
             location.save()
 
-            time.sleep(0.20)
+            time.sleep(0.30)
 
             print 'count: ', count
+
+
+def process_db(start_index):
+    count = start_index
+
+    rows = process_db_yield(start_index)
+    while True:
+        try:
+            row = rows.next()
+            count += 1
+            # 0 - Borough code (B - Bronx, K – Brooklyn, M – Manhattan, Q – Queens, Staten Island)
+            # 1 - ‘Status’ - order number
+            # 2 - Main Street
+            # 3 - From Street
+            # 4 - To Street
+            # 5 - Side of street (N - north, S - south, E - east, W - west)
+            code = row.code.strip()
+            status = row.status.strip()
+            main_street = row.main_street.strip()
+            from_street = row.from_street.strip()
+            to_street = row.to_street.strip()
+            side = row.side.strip()
+
+            area = get_code(code)
+
+            # Check if this data has already been fetched.
+            if LocationWithLatLng.objects.filter(code=code, status=status).exists():
+                continue
+
+            location_from_street = main_street + ' and ' + from_street + ', ' + area
+            location_info_from = fetch_lat_lng(location_from_street)
+
+            location_to_street = main_street + ' and ' + to_street + ', ' + area
+            location_info_to = fetch_lat_lng(location_to_street)
+
+            location = LocationWithLatLng()
+            location.code = code
+            location.status = status
+            location.main_street = main_street
+            location.from_street = from_street
+            location.to_street = to_street
+            location.side = side
+            location.lat_main_from = location_info_from['lat']
+            location.lng_main_from = location_info_from['lng']
+            location.lat_main_to = location_info_to['lat']
+            location.lng_main_to = location_info_to['lng']
+            location.save()
+
+            time.sleep(0.30)
+            print 'count: ', count
+        except StopIteration:
+            break
+        except:
+            error = "Unexpected error:", sys.exc_info()
+            break
+
+
+def process_db_yield(start_index):
+    rows = Location.objects.filter(id__gte=start_index)
+    for row in rows:
+        yield row
 
 
 def fetch_lat_lng(address):
@@ -144,5 +205,7 @@ def sign_url(url):
 
 
 if __name__ == '__main__':
-    process('../data/locations.csv')
+    # process_file('../data/locations.csv')
+    count = LocationWithLatLng.objects.all().count()
+    process_db(count - 10)
 
