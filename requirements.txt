@@ -1,3 +1,5 @@
 Django==1.7
 MySQL-python==1.2.5
 wsgiref==0.1.2
+django-allauth==0.18
+django-crispy-forms==1.4.0
