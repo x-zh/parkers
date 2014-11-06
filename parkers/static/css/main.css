@@ -10,8 +10,14 @@ body {
 .full-page {
     height: 100vh;
 }
+.full-page .hello h1 {
+    color: white;
+    text-shadow: 1px 1px gray;
+}
 .full-page .hello {
-    padding-top: 20vh;
+    font-size: 18px;
+    text-align: justify;
+    padding-top: 25vh;
     color: white;
 }
 .index-2 {
@@ -30,4 +36,9 @@ body {
 }
 .index-3 {
     height: 50vh;
+}
+.index-iphone {
+    padding-top: 20vh;
+    padding-right: 100px;
+    text-align: right;
 }
