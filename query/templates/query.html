@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block container %}
+<br/>
+<div class="col-sm-8 col-sm-offset-2">
+    <form action="" method="post" role="form" class="form-horizontal">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="inputLatitude" class="col-sm-2 control-label">Latitude</label>
+            <div class="col-sm-10">
+                <input name="latitude" type="text" class="form-control" id="inputLatitude" placeholder="Latitude">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="inputLongtitude" class="col-sm-2 control-label">Longtitude</label>
+            <div class="col-sm-10">
+                <input name="longtitude" type="text" class="form-control" id="inputLongtitude" placeholder="Longtitude">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="inputDateTime" class="col-sm-2 control-label">Date Time</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="inputDatetime" placeholder="yyyy-mmd-dd H:i:s">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-default">Search</button>
+                <span> Try 40.878732, -73.8642857</span>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock container %}

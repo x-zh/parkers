@@ -57,6 +57,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'backend',
     'parkers',
+    'query',
     # ===== 3rd party below ===== #
     'allauth',
     'allauth.account',

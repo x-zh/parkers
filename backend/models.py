@@ -15,8 +15,8 @@ class Location(models.Model):
 class Sign(models.Model):
     """ Raw data of the signs.
     """
-    code = models.CharField(max_length=5, blank=True, default='')
-    status = models.CharField(max_length=15, blank=True, default='')
+    code = models.CharField(db_index=True, max_length=5, blank=True, default='')
+    status = models.CharField(db_index=True, max_length=15, blank=True, default='')
     sequence = models.IntegerField()
     distance = models.IntegerField()
     arrow = models.CharField(max_length=5, blank=True, default='')

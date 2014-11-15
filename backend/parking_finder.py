@@ -81,25 +81,40 @@ def finder(point):
     lat = point[0]
     lng = point[1]
 
-    locations = LocationWithLatLng.objects.filter(lat_main_from__gte=lat - delta_T,
-                                                  lat_main_from__lte=lat + delta_T,
-                                                  lng_main_from__gte=lng - delta_T,
-                                                  lng_main_from__lte=lng + delta_T)
-    for location in locations:
-        print '------------------------------------'
-        print location.code, location.status, ', Main: ', location.main_street, get_code(location.code)
-        print 'From: %s (%f, %f), To: %s (%f, %f), Side: %s' % (location.from_street, float(location.lat_main_from), float(location.lng_main_from),
-                                                                location.to_street, float(location.lat_main_to), float(location.lng_main_to),
-                                                                location.side)
-        signs = Sign.objects.filter(code=location.code, status=location.status)
-        # for sign in signs:
-        # print sign.sequence, '%5s' % sign.distance, '%5s' % sign.arrow, sign.description
+    locations = LocationWithLatLng.objects.filter(
+        lat_main_from__gte=lat -
+        delta_T,
+        lat_main_from__lte=lat +
+        delta_T,
+        lng_main_from__gte=lng -
+        delta_T,
+        lng_main_from__lte=lng +
+        delta_T)
 
+    res = []
+    for location in locations:
+        signs = Sign.objects.filter(code=location.code, status=location.status)
         sanitation_schedule, slots_num = get_sanitation_schedule(signs)
-        if sanitation_schedule and slots_num:
-            print 'Sanitation schedule: %s-%s, %s' % (sanitation_schedule[0], sanitation_schedule[1], sanitation_schedule[2])
-            print 'Estimated parking slots: ', slots_num
-        print ''
+        res.append({
+            'location': location.main_street,
+            'from': location.from_street,
+            'to': location.to_street,
+            'side': location.side,
+            'sanitation_day': sanitation_schedule[2],
+            'sanitation_start': sanitation_schedule[0],
+            'sanitation_end': sanitation_schedule[1],
+            'estimated_num': slots_num
+        })
+        # print '------------------------------------'
+        # print location.code, location.status, ', Main: ', location.main_street, get_code(location.code)
+        # print 'From: %s (%f, %f), To: %s (%f, %f), Side: %s' % (location.from_street, float(location.lat_main_from), float(location.lng_main_from),
+        #                                                         location.to_street, float(location.lat_main_to), float(location.lng_main_to),
+        #                                                         location.side)
+        # if sanitation_schedule and slots_num:
+        #     print 'Sanitation schedule: %s-%s, %s' % (sanitation_schedule[0], sanitation_schedule[1], sanitation_schedule[2])
+        #     print 'Estimated parking slots: ', slots_num
+        # print ''
+    return res
 
 
 def get_sanitation_schedule(signs):
@@ -114,20 +129,23 @@ def get_sanitation_schedule(signs):
     sanitation_schedule = None
     for (index, sign) in enumerate(signs):
         if 'SANITATION BROOM SYMBOL' in sign.description and not start_sign:
-            # If current sign is not the first sign, then get the previous one as the start_sign for calculating the distance.
+            # If current sign is not the first sign, then get the previous one
+            # as the start_sign for calculating the distance.
             if index > 0:
                 start_sign = signs[index - 1]
             else:
                 start_sign = sign
         if 'SANITATION BROOM SYMBOL' in sign.description:
-            # If current sign is not the last sign, then get the next one as the end_sign for calculating the distance.
+            # If current sign is not the last sign, then get the next one as
+            # the end_sign for calculating the distance.
             if index < len(signs) - 1:
                 end_sign = signs[index + 1]
             else:
                 end_sign = sign
             # Parse sanitation schedule
             if not sanitation_schedule:
-                sanitation_schedule = parse_sanitation_schedule_date(sign.description)
+                sanitation_schedule = parse_sanitation_schedule_date(
+                    sign.description)
     distance = 0
     if start_sign and end_sign:
         distance = abs(end_sign.distance - start_sign.distance)
@@ -137,7 +155,9 @@ def get_sanitation_schedule(signs):
 def parse_sanitation_schedule_date(text):
     import re
 
-    m = re.findall(r'(\d{1,2}:?\d{0,2}((A|P)M)?)(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)?)\s([\w\ \&]*\w+)\ ', text)
+    m = re.findall(
+        r'(\d{1,2}:?\d{0,2}((A|P)M)?)(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)?)\s([\w\ \&]*\w+)\ ',
+        text)
     if m:
         m = m[0]
         return m[0], m[5], m[8]
@@ -164,4 +184,3 @@ def get_code(v):
 if __name__ == '__main__':
     my_location = (40.878732, -73.8642857)
     finder(my_location)
-    pass

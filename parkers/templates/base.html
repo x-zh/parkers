@@ -3,51 +3,52 @@
 <html>
 
 <head>
-    <title>{% block head_title %}{% endblock %}</title>
-    <link href="//fonts.googleapis.com/css?family=Roboto:300,400" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/lumen/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
-    <link rel="stylesheet" type="text/css" href="{% static "css/main.css" %}">
-    <script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
-    {% block extra_head %} {% endblock %}
+<title>Parkers {% block head_title %}{% endblock %}</title>
+<link href="//fonts.googleapis.com/css?family=Roboto:300,400" rel="stylesheet" type="text/css">
+<link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/lumen/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+<link rel="stylesheet" type="text/css" href="{% static "css/main.css" %}">
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+{% block extra_head %} {% endblock %}
 </head>
 
 <body>
-    {% block body %} {% if messages %}
-    <div>
-        <strong>Messages:</strong>
-        <ul>
-            {% for message in messages %}
-            <li>{{message}}</li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-      <div class="container">
+{% block body %} {% if messages %}
+<div>
+    <strong>Messages:</strong>
+    <ul>
+        {% for message in messages %}
+        <li>{{message}}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
         <div class="navbar-header">
-          <a class="navbar-brand" href="#"></a>
+            <a class="navbar-brand" href="/">A Parking App</a>
         </div>
         <ul class="nav navbar-nav navbar-right">
-          {% if user.is_authenticated %}
-          <li><a href="{% url 'account_email' %}">Change E-mail</a>
-          </li>
-          <li><a href="{% url 'account_logout' %}">Sign Out</a>
-          </li>
-          {% else %}
-          <li><a href="{% url 'account_login' %}">Sign In</a>
-          </li>
-          <li><a href="{% url 'account_signup' %}">Sign Up</a>
-          </li>
-          {% endif %}
+            {% if user.is_authenticated %}
+            <li><a href="{% url 'account_email' %}">Change E-mail</a>
+            </li>
+            <li><a href="{% url 'account_logout' %}">Sign Out</a>
+            </li>
+            {% else %}
+            <li><a href="{% url 'account_login' %}">Sign In</a>
+            </li>
+            <li><a href="{% url 'account_signup' %}">Sign Up</a>
+            </li>
+            {% endif %}
         </ul>
-      </div>
-    </nav>
-    <div class="container">
-      {% block container %} {% endblock container %}
     </div>
-    {% endblock body %}
-    {% block extra_body %} {% endblock extra_body %}
+</nav>
+<div class="container">
+    {% block container %} {% endblock container %}
+</div>
+{% endblock body %}
+{% block extra_body %} {% endblock extra_body %}
 </body>
 
 </html>
