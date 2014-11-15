@@ -1,12 +1,6 @@
-from django.conf.urls import patterns
+from django.conf.urls import patterns, url
 
-# from django.contrib import admin
-# admin.autodiscover()
-
+from backend import views as v
 urlpatterns = patterns('',
-                       # Examples:
-                       # url(r'^$', 'Parkers.views.home', name='home'),
-                       # url(r'^blog/', include('blog.urls')),
-
-                       # url(r'^admin/', include(admin.site.urls)),
+                       url(r'^google_map/$', v.google_map),
 )

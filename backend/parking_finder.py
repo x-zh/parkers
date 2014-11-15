@@ -31,7 +31,7 @@ Left: (lat, lng - T)
 
 The the box area is:
 
-(lat - T, lng - T)                              (lat - T, lng + T)
+(lat - T, lng - T)                              (lat + T, lng - T)
                 --------------------------------
                 |                              |
                 |                              |
@@ -43,7 +43,7 @@ The the box area is:
                 |                              |
                 |                              |
                 --------------------------------
-(lat - T, lng + T)                              (lat T T, lng + T)
+(lat - T, lng + T)                              (lat T + T, lng + T)
 
 The intersection points we need to get from database are:
 
@@ -65,10 +65,11 @@ Special cases:
 9-10:30AM TUES & F RI W
 
 """
-
+import django
 import os
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "parkers.settings")
+django.setup()
 
 import math
 from backend.models import LocationWithLatLng, Sign
@@ -80,7 +81,6 @@ car_length = 20  # a car needs about 20 feet to park.
 def finder(point):
     lat = point[0]
     lng = point[1]
-
     locations = LocationWithLatLng.objects.filter(lat_main_from__gte=lat - delta_T,
                                                   lat_main_from__lte=lat + delta_T,
                                                   lng_main_from__gte=lng - delta_T,
@@ -140,7 +140,22 @@ def parse_sanitation_schedule_date(text):
     m = re.findall(r'(\d{1,2}:?\d{0,2}((A|P)M)?)(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)?)\s([\w\ \&]*\w+)\ ', text)
     if m:
         m = m[0]
+        # from time, to time, which days in a week
         return m[0], m[5], m[8]
+    else:
+        m = re.findall(r'(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)|(\s\d{1,2}:?\d{0,2}((A|P)M)?(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)))(\s([\w\ \&]*\w+)\ )?', text)
+    if m and len(m) > 1:
+        from_time = ''
+        to_time = ''
+        days = ''
+        for element in m:
+            if element[0]:
+                days += element[0] + ' '
+            else:
+                time_text = re.split('to|TO|To|-', element[1])
+                if len(time_text) == 2:
+                    from_time, to_time = time_text[0], time_text[1]
+        return from_time, to_time, days
 
 
 def estimate_slots(length):
@@ -162,6 +177,8 @@ def get_code(v):
 
 
 if __name__ == '__main__':
-    my_location = (40.878732, -73.8642857)
+    my_location = (40.6140727, -73.989483)
     finder(my_location)
     pass
+
+
