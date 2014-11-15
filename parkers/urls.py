@@ -2,7 +2,10 @@ from django.conf.urls import patterns, url, include
 from django.views.generic import TemplateView
 
 from django.contrib import admin
+
 admin.autodiscover()
+
+from backend import views as v
 
 urlpatterns = patterns(
     '',
@@ -12,4 +15,5 @@ urlpatterns = patterns(
     url(r'^query/', include('query.urls')),
     url(r'^accounts/', include('allauth.urls')),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^google_map/$', v.google_map),
 )
