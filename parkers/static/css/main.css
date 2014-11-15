@@ -1,0 +1,44 @@
+body {
+    padding-top: 51px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+}
+.index-wrapper {
+    background: url(../images/busy_street.jpg) no-repeat center center fixed;
+    background-size: cover;
+}
+.full-page {
+    height: 100vh;
+}
+.full-page .hello h1 {
+    color: white;
+    text-shadow: 1px 1px gray;
+}
+.full-page .hello {
+    font-size: 18px;
+    text-align: justify;
+    padding-top: 25vh;
+    color: white;
+}
+.index-2 {
+    background-color: white;
+    padding-top: 15vh;
+    height: 50vh;
+}
+.align-center {
+    text-align: center;
+}
+.index-2 h1 {
+    font-size: 108px;
+}
+.index-2 p {
+    font-size: 22px;
+}
+.index-3 {
+    height: 50vh;
+}
+.index-iphone {
+    padding-top: 20vh;
+    padding-right: 100px;
+    text-align: right;
+}
