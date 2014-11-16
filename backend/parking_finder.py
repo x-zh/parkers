@@ -98,8 +98,8 @@ def finder(point):
         sanitation_schedule, slots_num = get_sanitation_schedule(signs)
         res.append({
             'location': location.main_street,
-            'from': location.from_street,
-            'to': location.to_street,
+            'from': (location.from_street, location.lat_main_from, location.lng_main_from),
+            'to': (location.to_street, location.lat_main_to, location.lng_main_to),
             'side': location.side,
             'sanitation_day': sanitation_schedule[2],
             'sanitation_start': sanitation_schedule[0],
