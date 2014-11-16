@@ -98,8 +98,8 @@ def finder(point):
         sanitation_schedule, slots_num = get_sanitation_schedule(signs)
         res.append({
             'location': location.main_street,
-            'from': (location.from_street, location.lat_main_from, location.lng_main_from),
-            'to': (location.to_street, location.lat_main_to, location.lng_main_to),
+            'from': (location.from_street, str(location.lat_main_from), str(location.lng_main_from)),
+            'to': (location.to_street, str(location.lat_main_to), str(location.lng_main_to)),
             'side': location.side,
             'sanitation_day': sanitation_schedule[2],
             'sanitation_start': sanitation_schedule[0],
@@ -164,7 +164,9 @@ def parse_sanitation_schedule_date(text):
         # from time, to time, which days in a week
         return m[0], m[5], m[8]
     else:
-        m = re.findall(r'(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)|(\s\d{1,2}:?\d{0,2}((A|P)M)?(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)))(\s([\w\ \&]*\w+)\ )?', text)
+        m = re.findall(
+            r'(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)|(\s\d{1,2}:?\d{0,2}((A|P)M)?(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)))(\s([\w\ \&]*\w+)\ )?',
+            text)
     if m and len(m) > 1:
         from_time = ''
         to_time = ''
