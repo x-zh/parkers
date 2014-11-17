@@ -59,6 +59,7 @@ INSTALLED_APPS = (
     'parkers',
     'query',
     # ===== 3rd party below ===== #
+    'oauth2_provider',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',

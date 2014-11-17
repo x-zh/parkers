@@ -16,4 +16,5 @@ urlpatterns = patterns(
     url(r'^accounts/', include('allauth.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^google_map/$', v.google_map),
+    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 )

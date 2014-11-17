@@ -11,24 +11,49 @@
             </div>
         </div>
         <div class="form-group">
-            <label for="inputLongtitude" class="col-sm-2 control-label">Longtitude</label>
+            <label for="inputLongitude" class="col-sm-2 control-label">Longitude</label>
             <div class="col-sm-10">
-                <input name="longtitude" type="text" class="form-control" id="inputLongtitude" placeholder="Longtitude">
+                <input name="longitude" type="text" class="form-control" id="inputLongitude" placeholder="Longitude">
             </div>
         </div>
         <div class="form-group">
             <label for="inputDateTime" class="col-sm-2 control-label">Date Time</label>
             <div class="col-sm-10">
-                <input type="text" class="form-control" id="inputDatetime" placeholder="yyyy-mmd-dd H:i:s">
+                <input name="datetime" type="text" class="form-control" id="inputDatetime" placeholder="yyyy-mmd-dd H:i:s">
             </div>
         </div>
 
         <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
-                <button type="submit" class="btn btn-default">Search</button>
-                <span> Try 40.878732, -73.8642857</span>
+                <button type="submit" class="btn btn-primary">Search</button>
+                <span class="pull-right"> Try 40.878732, -73.8642857</span>
             </div>
         </div>
     </form>
+</div>
+<div class="col-md-12">
+    {% if res %}
+    <h1>{{ res|length }} results</h1>
+    <table class="table table-hover table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Main street</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Week day</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        {% for row in res %}
+            <tr>
+                <td>{{ row.location }}</td>
+                <td>{{ row.from.0 }}</td>
+                <td>{{ row.to.0 }}</td>
+                <td>{{ row.day }}</td>
+                <td>{{ row.start }} - {{ row.end }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
 </div>
 {% endblock container %}

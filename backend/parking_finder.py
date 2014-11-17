@@ -55,7 +55,7 @@ that connect with it.
 
 Note:
 1. For a street, if one side has fire hydrants, then the other side doesn't.
-2. Valid parking place should start and end with 'Building Line' or 'Property Line'.
+2. Valid parking place start and end with 'Building Line' or 'Property Line'.
 3. Fire hydrant takes two parking spaces.
 4. Personal driveway takes one parking space.
 
@@ -67,54 +67,61 @@ Special cases:
 """
 import django
 import os
+import re
+import math
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "parkers.settings")
 django.setup()
 
-import math
 from backend.models import LocationWithLatLng, Sign
 
-delta_T = 0.0010  # 0.0065 is about 0.7 miles.
+delta_T = 0.007  # 0.0065 is about 0.7 miles.
 car_length = 20  # a car needs about 20 feet to park.
 
 
-def finder(point):
+def finder(point, dt=None):
     lat = point[0]
     lng = point[1]
 
-    locations = LocationWithLatLng.objects.filter(
-        lat_main_from__gte=lat -
-        delta_T,
-        lat_main_from__lte=lat +
-        delta_T,
-        lng_main_from__gte=lng -
-        delta_T,
-        lng_main_from__lte=lng +
-        delta_T)
+    # first layer, filter the location
+    kwargs = {
+        'lat_main_from__gte': lat - delta_T,
+        'lat_main_from__lte': lat + delta_T,
+        'lng_main_from__gte': lng - delta_T,
+        'lng_main_from__lte': lng + delta_T
+    }
+    locations = LocationWithLatLng.objects.filter(**kwargs)
 
     res = []
     for location in locations:
         signs = Sign.objects.filter(code=location.code, status=location.status)
         sanitation_schedule, slots_num = get_sanitation_schedule(signs)
+        if not sanitation_schedule:
+            continue
+        # second layer, filter by datetime
+        if dt and dt.weekday() not in sanitation_schedule[2]:
+            continue
+
         res.append({
             'location': location.main_street,
-            'from': (location.from_street, str(location.lat_main_from), str(location.lng_main_from)),
-            'to': (location.to_street, str(location.lat_main_to), str(location.lng_main_to)),
+            'from': (
+                location.from_street,
+                str(location.lat_main_from),
+                str(location.lng_main_from)
+            ),
+            'to': (
+                location.to_street,
+                str(location.lat_main_to),
+                str(location.lng_main_to)
+            ),
             'side': location.side,
-            'sanitation_day': sanitation_schedule[2],
-            'sanitation_start': sanitation_schedule[0],
-            'sanitation_end': sanitation_schedule[1],
-            'estimated_num': slots_num
+            'day': sanitation_schedule[2],
+            'start': sanitation_schedule[0],
+            'end': sanitation_schedule[1],
+            'estimated': slots_num
         })
-        # print '------------------------------------'
-        # print location.code, location.status, ', Main: ', location.main_street, get_code(location.code)
-        # print 'From: %s (%f, %f), To: %s (%f, %f), Side: %s' % (location.from_street, float(location.lat_main_from), float(location.lng_main_from),
-        #                                                         location.to_street, float(location.lat_main_to), float(location.lng_main_to),
-        #                                                         location.side)
-        # if sanitation_schedule and slots_num:
-        #     print 'Sanitation schedule: %s-%s, %s' % (sanitation_schedule[0], sanitation_schedule[1], sanitation_schedule[2])
-        #     print 'Estimated parking slots: ', slots_num
-        # print ''
+        # print location.code, location.status, ',
+        # Main: ', location.main_street, get_code(location.code)
     return res
 
 
@@ -153,32 +160,48 @@ def get_sanitation_schedule(signs):
     return sanitation_schedule, estimate_slots(distance)
 
 
-def parse_sanitation_schedule_date(text):
-    import re
+WEEKDAY = ['MON', 'TUES', 'WED', 'THURS', 'FRI', 'SAT', 'SUN']
+DAYS = set(WEEKDAY)
+ABBR = {
+    'MONDAY': 'MON', 'TUESDAY': 'TUES', 'WEDNESDAY': 'WED',
+    'THURSDAY': 'THURS', 'FRIDAY': 'FRI', 'SATURDAY': 'SAT',
+    'SUNDAY': 'SUN'
+}
 
-    m = re.findall(
-        r'(\d{1,2}:?\d{0,2}((A|P)M)?)(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)?)\s([\w\ \&]*\w+)\ ',
-        text)
-    if m:
-        m = m[0]
-        # from time, to time, which days in a week
-        return m[0], m[5], m[8]
+def process_days(daystr):
+    '''
+    return the weekdays according the daystr
+    '''
+    for k, v in ABBR.items():
+        daystr = daystr.replace(k, v)
+
+    res = set()
+    if '&' in daystr:
+        res = set([i.strip() for i in daystr.split('&')])
+    elif 'EXCEPT' in daystr:
+        res = DAYS - set([i.strip() for i in daystr.split(' ')[1].split('&')])
     else:
-        m = re.findall(
-            r'(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)|(\s\d{1,2}:?\d{0,2}((A|P)M)?(-|( TO ))(\d{1,2}:?\d{0,2}((A|P)M)))(\s([\w\ \&]*\w+)\ )?',
-            text)
-    if m and len(m) > 1:
-        from_time = ''
-        to_time = ''
-        days = ''
-        for element in m:
-            if element[0]:
-                days += element[0] + ' '
-            else:
-                time_text = re.split('to|TO|To|-', element[1])
-                if len(time_text) == 2:
-                    from_time, to_time = time_text[0], time_text[1]
-        return from_time, to_time, days
+        res = set([i.strip() for i in daystr.split(' ')])
+    return [i for i in range(7) if WEEKDAY[i] in res]
+
+
+def parse_sanitation_schedule_date(text):
+    '''
+    return start_time, end_time and days in a week
+    '''
+    hour = r'(\d{1,2}:?\d{0,2}(AM|PM)?)'
+    split = r'(-|( TO ))'
+    day = r'\s([\w\ \&]*\w+)\ '
+    m = re.findall(hour + split + hour + day, text)
+    if m:
+        return m[0][0], m[0][4], process_days(m[0][6])
+    else:
+        day = r'(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)'
+        day = r'((' + day + ' *)+)'
+        m = re.findall(day + hour + split + hour, text)
+        if m:
+            return m[0][3], m[0][7], process_days(m[0][0])
+    return None, None, None
 
 
 def estimate_slots(length):
