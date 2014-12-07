@@ -73,6 +73,8 @@ import math
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "parkers.settings")
 django.setup()
 
+from dateutil.parser import parse
+
 from backend.models import LocationWithLatLng, Sign
 
 delta_T = 0.007  # 0.0065 is about 0.7 miles.
@@ -98,11 +100,10 @@ def finder(point, dt=None):
         sanitation_schedule, slots_num = get_sanitation_schedule(signs)
         if not sanitation_schedule:
             continue
-        # second layer, filter by datetime
-        if dt and dt.weekday() not in sanitation_schedule[2]:
+        # second layer, filter by date
+        if dt and dt.weekday() not in sanitation_schedule['days']:
             continue
-
-        res.append({
+        data = {
             'location': location.main_street,
             'from': (
                 location.from_street,
@@ -115,13 +116,16 @@ def finder(point, dt=None):
                 str(location.lng_main_to)
             ),
             'side': location.side,
-            'day': sanitation_schedule[2],
-            'start': sanitation_schedule[0],
-            'end': sanitation_schedule[1],
+#            'datetime': sanitation_schedule,
+            'cleaned': dt.hour - sanitation_schedule['hours'][1].hour,
             'estimated': slots_num
-        })
+        }
+        res.append(data)
         # print location.code, location.status, ',
         # Main: ', location.main_street, get_code(location.code)
+
+    res.sort(
+        key=lambda x: x['cleaned'] if x['cleaned'] >= 0 else - x['cleaned'] * 2)
     return res
 
 
@@ -132,7 +136,7 @@ def get_sanitation_schedule(signs):
         schedule: (start time, end time, days in week)
         slots_num: estimated number of cars can be parking in the street.
     """
-
+    ssp = SanitationSignParser()
     start_sign, end_sign = None, None
     sanitation_schedule = None
     for (index, sign) in enumerate(signs):
@@ -152,56 +156,71 @@ def get_sanitation_schedule(signs):
                 end_sign = sign
             # Parse sanitation schedule
             if not sanitation_schedule:
-                sanitation_schedule = parse_sanitation_schedule_date(
-                    sign.description)
+                sanitation_schedule = ssp.parse(sign.description)
     distance = 0
     if start_sign and end_sign:
         distance = abs(end_sign.distance - start_sign.distance)
     return sanitation_schedule, estimate_slots(distance)
 
 
-WEEKDAY = ['MON', 'TUES', 'WED', 'THURS', 'FRI', 'SAT', 'SUN']
-DAYS = set(WEEKDAY)
-ABBR = {
-    'MONDAY': 'MON', 'TUESDAY': 'TUES', 'WEDNESDAY': 'WED',
-    'THURSDAY': 'THURS', 'FRIDAY': 'FRI', 'SATURDAY': 'SAT',
-    'SUNDAY': 'SUN'
-}
+class SanitationSignParser():
 
-def process_days(daystr):
     '''
-    return the weekdays according the daystr
+    parse sanitation sign into days, hour range
     '''
-    for k, v in ABBR.items():
-        daystr = daystr.replace(k, v)
+    WEEKDAY = ['MON', 'TUES', 'WED', 'THURS', 'FRI', 'SAT', 'SUN']
+    ABBR = {
+        'MONDAY': 'MON', 'TUESDAY': 'TUES', 'WEDNESDAY': 'WED',
+        'THURSDAY': 'THURS', 'FRIDAY': 'FRI', 'SATURDAY': 'SAT',
+        'SUNDAY': 'SUN'
+    }
+    DAYS = set(WEEKDAY)
 
-    res = set()
-    if '&' in daystr:
-        res = set([i.strip() for i in daystr.split('&')])
-    elif 'EXCEPT' in daystr:
-        res = DAYS - set([i.strip() for i in daystr.split(' ')[1].split('&')])
-    else:
-        res = set([i.strip() for i in daystr.split(' ')])
-    return [i for i in range(7) if WEEKDAY[i] in res]
+    def process_days(self, daystr):
+        '''
+        return the weekdays according the daystr
+        '''
+        for k, v in self.ABBR.items():
+            daystr = daystr.replace(k, v)
 
+        res = set()
+        if '&' in daystr:
+            res = set([i.strip() for i in daystr.split('&')])
+        elif 'EXCEPT' in daystr:
+            try:
+                res = self.DAYS - set(
+                    [i.strip() for i in daystr.split(' ')[1].split('&')])
+            except IndexError:
+                return []
+        else:
+            res = set([i.strip() for i in daystr.split(' ')])
+        return [i for i in range(7) if self.WEEKDAY[i] in res]
 
-def parse_sanitation_schedule_date(text):
-    '''
-    return start_time, end_time and days in a week
-    '''
-    hour = r'(\d{1,2}:?\d{0,2}(AM|PM)?)'
-    split = r'(-|( TO ))'
-    day = r'\s([\w\ \&]*\w+)\ '
-    m = re.findall(hour + split + hour + day, text)
-    if m:
-        return m[0][0], m[0][4], process_days(m[0][6])
-    else:
-        day = r'(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)'
-        day = r'((' + day + ' *)+)'
-        m = re.findall(day + hour + split + hour, text)
+    def process_hours(self, hour1, hour2):
+        return (parse(hour1), parse(hour2))
+
+    def parse(self, text):
+        '''
+        return start_time, end_time and days in a week
+        '''
+        res = {}
+        hour = r'(\d{1,2}:?\d{0,2}(AM|PM)?)'
+        split = r'(-|( TO ))'
+        day = r'\s([\w\ \&]*\w+)\ '
+        m = re.findall(hour + split + hour + day, text)
         if m:
-            return m[0][3], m[0][7], process_days(m[0][0])
-    return None, None, None
+            res["hours"] = self.process_hours(m[0][0], m[0][4])
+            res["days"] = self.process_days(m[0][6])
+            return res
+        else:
+            day = r'(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)'
+            day = r'((' + day + ' *)+)'
+            m = re.findall(day + hour + split + hour, text)
+            if m:
+                res["hours"] = self.process_hours(m[0][3], m[0][7])
+                res["days"] = self.process_days(m[0][0])
+                return res
+        return res
 
 
 def estimate_slots(length):

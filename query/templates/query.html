@@ -19,7 +19,7 @@
         <div class="form-group">
             <label for="inputDateTime" class="col-sm-2 control-label">Date Time</label>
             <div class="col-sm-10">
-                <input name="datetime" type="text" class="form-control" id="inputDatetime" placeholder="yyyy-mmd-dd H:i:s">
+                <input name="datetime" type="text" class="form-control" id="inputDatetime" placeholder="yyyy-mmd-dd H:i:s, Default is now">
             </div>
         </div>
 
@@ -49,8 +49,8 @@
                 <td>{{ row.location }}</td>
                 <td>{{ row.from.0 }}</td>
                 <td>{{ row.to.0 }}</td>
-                <td>{{ row.day }}</td>
-                <td>{{ row.start }} - {{ row.end }}</td>
+                <td>{{ row.datetime.days }}</td>
+                <td>{{ row.datetime.hours.0|time:'H:i'}} - {{ row.datetime.hours.1|time:'H:i' }}</td>
             </tr>
         {% endfor %}
     </table>

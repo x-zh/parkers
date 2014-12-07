@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
@@ -15,7 +16,7 @@ def finderHelper(request):
         req_data = request.POST
         location = (float(req_data.get('latitude')),
                     float(req_data.get('longitude')))
-        dt = None
+        dt = datetime.now()
         if req_data.get('datetime'):
             dt = parse(req_data.get('datetime'))
         res = finder(location, dt)
