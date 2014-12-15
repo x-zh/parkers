@@ -58,6 +58,7 @@ INSTALLED_APPS = (
     'backend',
     'parkers',
     'query',
+    'notifier',
     # ===== 3rd party below ===== #
     'oauth2_provider',
     'allauth',
