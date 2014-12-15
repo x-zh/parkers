@@ -35,4 +35,6 @@ def main(request):
     if request.method == 'GET':
         return render(request, 'query.html')
     res = finderHelper(request)
-    return render(request, 'query.html', {'res': res})
+    return HttpResponse(json.dumps(res),
+                        content_type='application/json')
+    # return render(request, 'query.html', {'res': res})

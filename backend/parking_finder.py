@@ -1,70 +1,4 @@
 # coding=UTF-8
-
-"""
-Created on 9/9/14
-
-@author: 'johnqiao'
-
-----------------------------------------
-|  |  |  |  |  |  |  |  |  |  |  |  |  |
-----------------------------------------
-|  |  |  |  |  |  |  |  |  |  |  |  |  |
-----------------------------------------
-|  |  |  |  |  |  |  |  |  |  |  |  |  |
-----------------------------------------
-|  |  |  |  |  |  |  | D|  |  |  |  |  |
-----------------------------------------
-|  |  |  |  |  |  |  |  |  |  |  |  |  |
-----------------------------------------
-|  |  |  |  |  |  |  |  |  |  |  |  |  |
-----------------------------------------
-
-Destination point D's location is (lat, lng).
-
-Use a delta T to locate a box area which we use it to further find
-all the parking places.
-
-Top: (lat - T, lng)
-Right: (lat, lng + T)
-Bottom: (lat + T, lng)
-Left: (lat, lng - T)
-
-The the box area is:
-
-(lat - T, lng - T)                              (lat + T, lng - T)
-                --------------------------------
-                |                              |
-                |                              |
-                |                              |
-                |                              |
-                |               D              |
-                |                              |
-                |                              |
-                |                              |
-                |                              |
-                --------------------------------
-(lat - T, lng + T)                              (lat T + T, lng + T)
-
-The intersection points we need to get from database are:
-
-points (x, y) where x >= lat - T && x <= lat + T
-                    y >= lng - T && y <= lng + T
-
-Use the intersection points to find all the streets/avenues
-that connect with it.
-
-Note:
-1. For a street, if one side has fire hydrants, then the other side doesn't.
-2. Valid parking place start and end with 'Building Line' or 'Property Line'.
-3. Fire hydrant takes two parking spaces.
-4. Personal driveway takes one parking space.
-
-
-Special cases:
-,NO PARKING (SANITATION BROOM SYMBOL) 8-11AM MON & THURS SEE R7-84R
-9-10:30AM TUES & F RI W
-
-"""
 import django
 import os
 import re
@@ -103,29 +37,38 @@ def finder(point, dt=None):
         # second layer, filter by date
         if dt and dt.weekday() not in sanitation_schedule['days']:
             continue
-        data = {
-            'location': location.main_street,
-            'from': (
-                location.from_street,
-                str(location.lat_main_from),
-                str(location.lng_main_from)
-            ),
-            'to': (
-                location.to_street,
-                str(location.lat_main_to),
-                str(location.lng_main_to)
-            ),
-            'side': location.side,
-#            'datetime': sanitation_schedule,
-            'cleaned': dt.hour - sanitation_schedule['hours'][1].hour,
-            'estimated': slots_num
-        }
-        res.append(data)
+
+        try:
+            data = {
+                'location': location.main_street,
+                'from': (
+                    location.from_street,
+                    str(location.lat_main_from),
+                    str(location.lng_main_from)
+                ),
+                'to': (
+                    location.to_street,
+                    str(location.lat_main_to),
+                    str(location.lng_main_to)
+                ),
+                'side': location.side,
+                'datetime': {
+                    'days': sanitation_schedule['days'],
+                    'hours': [str(i.time())[:-3] for i in sanitation_schedule['hours']]
+                },
+                'cleaned': dt.hour - sanitation_schedule['hours'][1].hour,
+                'estimated': slots_num
+            }
+            if data['cleaned'] <= 2 and data['cleaned'] >= -1:
+                res.append(data)
+        except:
+            print 'chu cuo la !!!'
+            pass
         # print location.code, location.status, ',
         # Main: ', location.main_street, get_code(location.code)
 
-    res.sort(
-        key=lambda x: x['cleaned'] if x['cleaned'] >= 0 else - x['cleaned'] * 2)
+    # res.sort(
+    #     key=lambda x: x['cleaned'] if x['cleaned'] >= 0 else - x['cleaned'] * 2)
     return res
 
 
@@ -211,7 +154,6 @@ class SanitationSignParser():
         if m:
             res["hours"] = self.process_hours(m[0][0], m[0][4])
             res["days"] = self.process_days(m[0][6])
-            return res
         else:
             day = r'(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)'
             day = r'((' + day + ' *)+)'
@@ -219,7 +161,6 @@ class SanitationSignParser():
             if m:
                 res["hours"] = self.process_hours(m[0][3], m[0][7])
                 res["days"] = self.process_days(m[0][0])
-                return res
         return res
 
 
@@ -241,6 +182,71 @@ def get_code(v):
     print 'Error: Borough code not found!!'
 
 
+"""
+Created on 9/9/14
+
+@author: 'johnqiao'
+
+----------------------------------------
+|  |  |  |  |  |  |  |  |  |  |  |  |  |
+----------------------------------------
+|  |  |  |  |  |  |  |  |  |  |  |  |  |
+----------------------------------------
+|  |  |  |  |  |  |  |  |  |  |  |  |  |
+----------------------------------------
+|  |  |  |  |  |  |  | D|  |  |  |  |  |
+----------------------------------------
+|  |  |  |  |  |  |  |  |  |  |  |  |  |
+----------------------------------------
+|  |  |  |  |  |  |  |  |  |  |  |  |  |
+----------------------------------------
+
+Destination point D's location is (lat, lng).
+
+Use a delta T to locate a box area which we use it to further find
+all the parking places.
+
+Top: (lat - T, lng)
+Right: (lat, lng + T)
+Bottom: (lat + T, lng)
+Left: (lat, lng - T)
+
+The the box area is:
+
+(lat - T, lng - T)                              (lat + T, lng - T)
+                --------------------------------
+                |                              |
+                |                              |
+                |                              |
+                |                              |
+                |               D              |
+                |                              |
+                |                              |
+                |                              |
+                |                              |
+                --------------------------------
+(lat - T, lng + T)                              (lat T + T, lng + T)
+
+The intersection points we need to get from database are:
+
+points (x, y) where x >= lat - T && x <= lat + T
+                    y >= lng - T && y <= lng + T
+
+Use the intersection points to find all the streets/avenues
+that connect with it.
+
+Note:
+1. For a street, if one side has fire hydrants, then the other side doesn't.
+2. Valid parking place start and end with 'Building Line' or 'Property Line'.
+3. Fire hydrant takes two parking spaces.
+4. Personal driveway takes one parking space.
+
+
+Special cases:
+,NO PARKING (SANITATION BROOM SYMBOL) 8-11AM MON & THURS SEE R7-84R
+9-10:30AM TUES & F RI W
+
+"""
 if __name__ == '__main__':
     my_location = (40.6140727, -73.989483)
     finder(my_location)
